@@ -1,19 +1,28 @@
-package hello
+package books
 
 import (
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
+
+type BOOK struct {
+	ISBN   string `json:"isbn"`
+	Title  string `json:"title"`
+	Author string `json:"author"`
+}
 
 var db = dynamodb.New(session.New(), aws.NewConfig().WithRegion("ap-southeast-2"))
 
-func getItem(isbn string)(*book, error) {
-	input := dynamodb.GetItemInput {
+// Retrieve book item from dynbamodb
+func GetBook(isbn string) (*BOOK, error) {
+	input := &dynamodb.GetItemInput{
 		TableName: aws.String("Books"),
-		Key: dynamodb.AttributeValue {
-			"ISBN" : {S: aws.String(isbn),}
+		Key: map[string]*dynamodb.AttributeValue{
+			"ISBN": {
+				S: aws.String(isbn),
+			},
 		},
 	}
 	result, err := db.GetItem(input)
@@ -25,12 +34,11 @@ func getItem(isbn string)(*book, error) {
 		return nil, nil
 	}
 
-	bk := new(book)
+	bk := new(BOOK)
 	err = dynamodbattribute.UnmarshalMap(result.Item, bk)
-	if (err != nil) {
+	if err != nil {
 		return nil, err
 	}
 
 	return bk, nil
 }
-

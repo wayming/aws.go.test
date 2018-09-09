@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 
@@ -29,19 +30,40 @@ func Load(numberOfRows int) {
 
 	for i := 1; i <= numberOfRows; i++ {
 
+		var item map[string]*dynamodb.AttributeValue
+
+		if i == (numberOfRows - 1) {
+			// special book
+			item =
+				map[string]*dynamodb.AttributeValue{
+					"ISBN": {
+						S: aws.String(strings.Repeat("0", 3) + "-" + strings.Repeat("0", 10)),
+					},
+					"Title": {
+						S: aws.String(strings.Repeat("a", 4) + " " + strings.Repeat("b", 3) + " " + strings.Repeat("c", 2)),
+					},
+					"Author": {
+						S: aws.String(randString(8)),
+					},
+				}
+		} else {
+			item =
+				map[string]*dynamodb.AttributeValue{
+					"ISBN": {
+						S: aws.String(strconv.Itoa(100+rand.Intn(899)) + "-" +
+							strconv.Itoa(1000000000+rand.Intn(8999999999))),
+					},
+					"Title": {
+						S: aws.String(randString(4) + " " + randString(3) + " " + randString(2)),
+					},
+					"Author": {
+						S: aws.String(randString(8)),
+					},
+				}
+		}
+
 		input := &dynamodb.PutItemInput{
-			Item: map[string]*dynamodb.AttributeValue{
-				"ISBN": {
-					S: aws.String(strconv.Itoa(100+rand.Intn(899)) + "-" +
-						strconv.Itoa(100000000+rand.Intn(899999999))),
-				},
-				"Title": {
-					S: aws.String(randString(4) + " " + randString(3) + " " + randString(2)),
-				},
-				"Author": {
-					S: aws.String(randString(8)),
-				},
-			},
+			Item:      item,
 			TableName: aws.String("Books"),
 		}
 		fmt.Println("Inserting " + strconv.Itoa(i) + "th record")
